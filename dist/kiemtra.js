@@ -6,6 +6,9 @@ class Person {
         this._email = email;
         this._phone = phone;
     }
+    get id() {
+        return this._id;
+    }
     getDetails() {
         return `ID: ${this._id}, Name: ${this._name}, Email: ${this._email}, Phone: ${this._phone}`;
     }
@@ -19,6 +22,12 @@ class Room {
     }
     get roomId() {
         return this._roomId;
+    }
+    get type() {
+        return this._type;
+    }
+    get isAvailable() {
+        return this._isAvailable;
     }
     bookRoom() {
         this._isAvailable = false;
@@ -87,7 +96,7 @@ class Booking {
         this._totalCost = room.calculateCost(nights);
     }
     getDetails() {
-        return `Mã đặt phòng: ${this._bookingId}, Khách hàng: ${this._customer.getDetails()}, Loại phòng: ${this._room["_type"]}, Số đêm: ${this._nights}, Tổng chi phí: ${this._totalCost}`;
+        return `Mã đặt phòng: ${this._bookingId}, Khách hàng: ${this._customer.getDetails()}, Loại phòng: ${this._room.type}, Số đêm: ${this._nights}, Tổng chi phí: ${this._totalCost}`;
     }
 }
 class HotelManager {
@@ -126,7 +135,7 @@ class HotelManager {
         if (!customer || !room) {
             throw new Error("Không tìm thấy khách hàng, phòng");
         }
-        if (!room["_isAvailable"]) {
+        if (!room.isAvailable) {
             throw new Error("Phòng không còn trống");
         }
         room.bookRoom();
@@ -144,8 +153,8 @@ class HotelManager {
         }
     }
     listAvailableRooms() {
-        const availableRooms = this._rooms.filter(r => r["_isAvailable"]);
-        availableRooms.forEach(r => console.log(`Mã phòng: ${r.roomId}, Loại phòng: ${r["_type"]}`));
+        const availableRooms = this._rooms.filter(r => r.isAvailable);
+        availableRooms.forEach(r => console.log(`Mã phòng: ${r.roomId}, Loại phòng: ${r.type}`));
     }
     listBookingsByCustomer(customerId) {
         const customerBookings = this._bookings.filter(b => b["_customer"].id === customerId);
@@ -156,7 +165,7 @@ class HotelManager {
     }
     getRoomTypesCount() {
         const roomTypesCount = this._rooms.reduce((count, room) => {
-            count[room["_type"]] = (count[room["_type"]] || 0) + 1;
+            count[room.type] = (count[room.type] || 0) + 1;
             return count;
         }, {});
         console.log(roomTypesCount);
@@ -166,7 +175,7 @@ class HotelManager {
         if (roomIndex !== -1) {
             const room = this._rooms[roomIndex];
             const discountedPrice = room.applyDiscount(discountRate);
-            console.log(`Giá phòng sau giảm giá ${roomId}: ${discountedPrice}`);
+            console.log(`Giá phòng sau khi giảm ${roomId}: ${discountedPrice}`);
         }
         else {
             throw new Error("Không tìm thấy phòng");
@@ -209,26 +218,26 @@ class HotelManager {
             const choice = prompt("Chọn một tùy chọn:");
             switch (choice) {
                 case "1":
-                    const roomType = prompt("Nhập loại phòng (Standard/Deluxe/Suite):");
-                    const roomPrice = parseFloat(prompt("Nhập giá phòng mỗi đêm:") || "0");
+                    const roomType = prompt("Nhập loại phòng: Standard,Deluxe,Suite:");
+                    const roomPrice = parseFloat(prompt("Nhập giá phòng:") || "0");
                     if (roomType && roomPrice > 0) {
                         this.addRoom(roomType, roomPrice);
-                        console.log("Phòng đã được thêm thành công");
+                        console.log("Thêm phòng thành công");
                     }
                     else {
-                        console.log("Dữ liệu không hợp lệ");
+                        console.log("Không hợp lệ");
                     }
                     break;
                 case "2":
-                    const customerName = prompt("Nhập tên khách hàng:");
-                    const customerEmail = prompt("Nhập email khách hàng:");
-                    const customerPhone = prompt("Nhập số điện thoại khách hàng:");
+                    const customerName = prompt("Nhập tên:");
+                    const customerEmail = prompt("Nhập email:");
+                    const customerPhone = prompt("Nhập số điện thoại:");
                     if (customerName && customerEmail && customerPhone) {
                         const customer = this.addCustomer(customerName, customerEmail, customerPhone);
-                        console.log(`Thêm thành công ID: ${customer.id}`);
+                        console.log(`Thành Công: ${customer.id}`);
                     }
                     else {
-                        console.log("Dữ liệu không hợp lệ");
+                        console.log("Sai");
                     }
                     break;
                 case "3":
@@ -237,17 +246,17 @@ class HotelManager {
                     const nights = parseInt(prompt("Nhập số đêm:") || "0");
                     try {
                         const booking = this.bookRoom(customerId, roomId, nights);
-                        console.log("Phòng đã được đặt thành công.");
+                        console.log("Đặt thành công");
                     }
                     catch (error) {
                         console.log("Lỗi: " + error.message);
                     }
                     break;
                 case "4":
-                    const releaseRoomId = parseInt(prompt("Nhập ID phòng để hủy:") || "0");
+                    const releaseRoomId = parseInt(prompt("Nhập ID phòng:") || "0");
                     try {
                         this.releaseRoom(releaseRoomId);
-                        console.log("Phòng được hủy thành công");
+                        console.log("Hủy thành công");
                     }
                     catch (error) {
                         console.log("Lỗi: ");
@@ -257,26 +266,26 @@ class HotelManager {
                     this.listAvailableRooms();
                     break;
                 case "6":
-                    const listCustomerId = parseInt(prompt("Nhập ID khách hàng để xem đặt phòng:") || "0");
+                    const listCustomerId = parseInt(prompt("Nhập ID khách hàng:") || "0");
                     this.listBookingsByCustomer(listCustomerId);
                     break;
                 case "7":
-                    console.log("Tổng doanh thu: ");
+                    console.log("Tổng doanh thu:");
                     break;
                 case "8":
                     this.getRoomTypesCount();
                     break;
                 case "9":
-                    const discountRoomId = parseInt(prompt("Nhập ID phòng để áp dụng giảm giá:") || "0");
-                    const discountRate = parseFloat(prompt("Nhập tỷ lệ giảm giá:") || "0");
+                    const discountRoomId = parseInt(prompt("Nhập ID phòng:") || "0");
+                    const discountRate = parseFloat(prompt("Giảm:") || "0");
                     this.applyDiscountToRoom(discountRoomId, discountRate);
                     break;
                 case "10":
-                    const servicesRoomId = parseInt(prompt("Nhập ID phòng để xem dịch vụ:") || "0");
+                    const servicesRoomId = parseInt(prompt("Nhập ID phòng:") || "0");
                     this.getRoomServices(servicesRoomId);
                     break;
                 case "11":
-                    const cancelRoomId = parseInt(prompt("Nhập ID phòng để xem chính sách hủy phòng:") || "0");
+                    const cancelRoomId = parseInt(prompt("Nhập ID phòng:") || "0");
                     this.getCancellationPolicy(cancelRoomId);
                     break;
                 case "12":
@@ -284,7 +293,7 @@ class HotelManager {
                     console.log("Thoát");
                     break;
                 default:
-                    console.log("Vui lòng thử lại");
+                    console.log("Thử lại");
             }
         }
     }
